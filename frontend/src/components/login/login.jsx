@@ -2,6 +2,7 @@ import { useState } from "react";
 import Web3 from "web3"; // Import Web3 for MetaMask connection
 import "./login.css"; // Import CSS
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 const VoterLogin = () => {
   const [voterId, setVoterId] = useState("");
@@ -9,7 +10,7 @@ const VoterLogin = () => {
   const [voterIdError, setVoterIdError] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [walletAddress, setWalletAddress] = useState(null);
-
+  const navigate = useNavigate();
   const validateForm = () => {
     let isValid = true;
 
@@ -60,6 +61,12 @@ const VoterLogin = () => {
           signature: signature,
           message: message,
         });
+console.log("res",response.data.success);
+             if (response.data.success) {
+                navigate("/voting", { state: { account: response.data.account } }); // Pass account
+            } else {
+                alert("Voting failed!");
+            }
 
         console.log("Backend Response:", response.data);
       } catch (error) {

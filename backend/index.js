@@ -16,7 +16,7 @@ const web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:7545'));
 const votingABI = require("./artifacts/contracts/Voting.sol/Voting.json");
 
 // ✅ Ensure the correct contract address is used
-const contractAddress = "0x66f6b4726e999a1EdaA20E97920DCDb8ee5Ae9FC";
+const contractAddress = "0xb9E91e383EC7529583017dbc1ef4cF65a7a3EbC1";
 
 // ✅ Load the contract
 const contractABI = votingABI.abi;
@@ -38,7 +38,7 @@ app.post("/login", (req, res) => {
 
         if (recoveredAddress.toLowerCase() === address.toLowerCase()) {
             console.log("User logged in:", address);
-            return res.json({ success: true, message: "Login successful!" });
+            return res.json({ success: true, message: "Login successful!", account: address });
         } else {
             return res.status(401).json({ success: false, message: "Signature verification failed" });
         }
@@ -60,9 +60,9 @@ app.get("/candidates", async (req, res) => {
 
 app.post("/vote", async (req, res) => {
     try {
-        const { candidateIndex } = req.body;
+        const { address, candidateIndex } = req.body;
         const tx = await contract.methods.vote(candidateIndex).send({
-            from: account.address,
+            from: address,
             gas: 2000000
         });
         res.json({ message: "Vote successful!", transaction: tx.transactionHash });

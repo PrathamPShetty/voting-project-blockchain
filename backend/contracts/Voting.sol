@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.28;
 
 contract Voting {
     struct Candidate {
@@ -63,18 +63,3 @@ constructor(string[] memory _candidateNames, uint256 _durationInMinutes) {
 }
 }
 
-
-// constructor(string[] memory _candidateNames, uint256 _durationInMinutes) {
-//     require(_durationInMinutes > 0, "Duration must be greater than zero.");
-//     owner = msg.sender;
-//     votingStart = block.timestamp;
-//     votingEnd = block.timestamp + (_durationInMinutes * 1 minutes);
-
-//     // Allow empty candidate list
-//     for (uint256 i = 0; i < _candidateNames.length; i++) {
-//         candidates.push(Candidate({
-//             name: _candidateNames[i],
-//             voteCount: 0
-//         }));
-//     }
-// }

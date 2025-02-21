@@ -5,6 +5,7 @@ import Login from "./components/login/login";
 import Guidelines from "./components/guide/guide";
 import AdminPanel from "./components/index";
 import './App.css';
+import VotingApp from "./components/votingPage/votingPage";
 
 function App() {
   return (
@@ -15,6 +16,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/guidelines" element={<Guidelines />} />
           <Route path="/admin" element={<AdminPanel />} />
+          <Route path="/voting" element={<VotingApp/>}/>
         </Routes>
       </div>
     </Router>
