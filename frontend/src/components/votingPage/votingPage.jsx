@@ -9,11 +9,12 @@ const VotingApp = () => {
     const [selectedCandidate, setSelectedCandidate] = useState(null);
     const location = useLocation();
     const account = location.state?.account;
-    useEffect(()=>{
-        if(account){
+
+    useEffect(() => {
+        if (account) {
             setWallet(account);
         }
-    },[account]);
+    }, [account]);
 
     useEffect(() => {
         const fetchCandidates = async () => {
@@ -33,6 +34,8 @@ const VotingApp = () => {
             return;
         }
 
+        console.log(selectedCandidate);
+
         try {
             const response = await axios.post("http://localhost:5000/vote", {
                 address: wallet,
@@ -47,44 +50,53 @@ const VotingApp = () => {
 
     return (
         <div className="container">
-            <h1>Voting DApp</h1>
+            {/* Header Section */}
+            <div className="header">
+                <h1>Voting DApp</h1>
+                {wallet && <p className="wallet">Connected: {wallet}</p>}
+            </div>
 
-            {wallet ? (
-                <p className="connected-wallet">Connected: {wallet}</p>
-            ) : (
-                <button className="connect-button">Login failed</button>
-            )}
+            {/* Voting Section */}
+            <div className="voting-section">
+                <h2>Candidates</h2>
+                {candidates.length === 0 ? (
+                    <p>Loading candidates...</p>
+                ) : (
+                    <ul className="candidate-list">
+                        {candidates.map((candidate, index) => (
+                            <li 
+                                key={index} 
+                                className={`candidate-item ${selectedCandidate === index ? "selected" : ""}`} 
+                                onClick={() => setSelectedCandidate(index)}
+                            >
+                                <label>
+                                    <input 
+                                        type="radio" 
+                                        name="candidate" 
+                                        checked={selectedCandidate === index} 
+                                        onChange={() => setSelectedCandidate(index)} 
+                                    />
+                                    {candidate.name} ({candidate.voteCount} votes)
+                                </label>
+                            </li>
+                        ))}
+                    </ul>
+                )}
+                <button 
+                    className="vote-button" 
+                    onClick={vote} 
+                    disabled={!wallet || selectedCandidate === null}
+                >
+                    Vote
+                </button>
+            </div>
 
-            <h2>Candidates</h2>
-            {candidates.length === 0 ? (
-                <p>Loading candidates...</p>
-            ) : (
-                <ul className="candidate-list">
-                    {candidates.map((candidate, index) => (
-                        <li 
-                            key={index} 
-                            className={`candidate-item ${selectedCandidate === index ? "selected" : ""}`} 
-                            onClick={() => setSelectedCandidate(index)}
-                        >
-                            <span>{candidate.name} ({candidate.voteCount} votes)</span>
-                            <input 
-                                type="radio" 
-                                name="candidate" 
-                                checked={selectedCandidate === index} 
-                                onChange={() => setSelectedCandidate(index)} 
-                            />
-                        </li>
-                    ))}
-                </ul>
-            )}
-
-            <button 
-                className="vote-button" 
-                onClick={vote} 
-                disabled={!wallet || selectedCandidate === null}
-            >
-                Vote
-            </button>
+            {/* Candidate ID Display */}
+            <div className="candidate-id">
+                {selectedCandidate !== null && (
+                    <h3>Selected Candidate ID: {selectedCandidate}</h3>
+                )}
+            </div>
         </div>
     );
 };

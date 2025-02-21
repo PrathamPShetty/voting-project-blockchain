@@ -1,101 +1,88 @@
-/* General Page Styling */
-body {
-    font-family: Arial, sans-serif;
-    background-color: #121212;
-    color: white;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    margin: 0;
-}
-
-/* Container */
+/* Layout */
 .container {
-    background-color: #1e1e1e;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
     padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-    width: 350px;
+    margin-top: 320px; 
+    background-color: #ffffff00;
+
+
+}
+
+/* Header */
+.header {
+    width: 100%;
     text-align: center;
+    background: #007bff;
+    color: white;
+    padding: 10px 0;
+    border-radius: 10px;
+    margin-top: 220px; 
 }
 
-/* Title */
-h1 {
-    font-size: 24px;
-    margin-bottom: 10px;
-}
-
-/* MetaMask Connection Status */
-.connected-wallet {
-    color: #4caf50;
+.wallet {
     font-size: 14px;
-    margin-bottom: 15px;
+    margin-top: 5px;
+}
+
+/* Voting Section */
+.voting-section {
+    width: 100%;
+    max-width: 500px;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 10px;
+
+    text-align: center;
+    margin-top: 20px; 
+
 }
 
 /* Candidate List */
 .candidate-list {
-    list-style-type: none;
+    list-style: none;
     padding: 0;
 }
 
 .candidate-item {
-    background-color: #2a2a2a;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     padding: 10px;
+    background: white;
     margin: 5px 0;
     border-radius: 5px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    border: 1px solid #ccc;
     cursor: pointer;
-    transition: background 0.3s ease;
 }
 
-.candidate-item:hover {
-    background-color: #333;
-}
-
-/* Selected Candidate */
-.selected {
-    border: 2px solid #007bff;
+.candidate-item.selected {
+    background: #007bff;
+    color: white;
 }
 
 /* Vote Button */
 .vote-button {
-    background-color: #007bff;
+    margin-top: 10px;
+    padding: 10px 20px;
+    background: #28a745;
     color: white;
-    padding: 10px;
     border: none;
     border-radius: 5px;
-    font-size: 16px;
     cursor: pointer;
-    width: 100%;
-    margin-top: 15px;
-    transition: background 0.3s ease;
+    font-size: 16px;
 }
 
 .vote-button:disabled {
-    background-color: #555;
+    background: #ccc;
     cursor: not-allowed;
 }
 
-.vote-button:hover:not(:disabled) {
-    background-color: #0056b3;
-}
-
-/* MetaMask Connect Button */
-.connect-button {
-    background-color: #ff9800;
-    color: white;
-    padding: 10px;
-    border: none;
-    border-radius: 5px;
-    font-size: 16px;
-    cursor: pointer;
-    width: 100%;
-    transition: background 0.3s ease;
-}
-
-.connect-button:hover {
-    background-color: #e68900;
+/* Candidate ID Display */
+.candidate-id {
+    text-align: center;
+    font-size: 18px;
+    font-weight: bold;
 }

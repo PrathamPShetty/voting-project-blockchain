@@ -1,0 +1,67 @@
+/* Center the login form */
+.flex {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 10vh;
+    background-color: #f3f4f6;
+  }
+  
+  /* Login box styling */
+  .bg-white {
+    background-color: rgba(255, 255, 255, 0.9);
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    width: 400px;
+  }
+  
+  /* Input fields */
+  input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    margin-top: 5px;
+  }
+  
+  /* Error message styling */
+  .text-red-500 {
+    color: red;
+    font-size: 12px;
+  }
+  
+  /* Button styles */
+  button {
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    color: white;
+    cursor: pointer;
+  }
+  
+  .bg-blue-600 {
+    background-color: #2563eb;
+  }
+  
+  .bg-blue-600:hover {
+    background-color: #1d4ed8;
+  }
+  
+  .bg-gray-500 {
+    background-color: #6b7280;
+  }
+  
+  .bg-gray-500:hover {
+    background-color: #4b5563;
+  }
+  
+  /* MetaMask button */
+  .bg-orange-500 {
+    background-color: #f97316;
+  }
+  
+  .bg-orange-500:hover {
+    background-color: #ea580c;
+  }
+  
