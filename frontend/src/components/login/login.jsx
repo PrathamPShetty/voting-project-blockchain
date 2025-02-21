@@ -1,13 +1,14 @@
 import { useState } from "react";
 import Web3 from "web3"; // Import Web3 for MetaMask connection
 import "./login.css"; // Import CSS
+import axios from "axios";
 
 const VoterLogin = () => {
   const [voterId, setVoterId] = useState("");
   const [password, setPassword] = useState("");
   const [voterIdError, setVoterIdError] = useState("");
   const [passwordError, setPasswordError] = useState("");
-  const [walletAddress, setWalletAddress] = useState("");
+  const [walletAddress, setWalletAddress] = useState(null);
 
   const validateForm = () => {
     let isValid = true;
@@ -39,23 +40,35 @@ const VoterLogin = () => {
     }
   };
 
-  // MetaMask Connection
   const connectMetaMask = async () => {
     if (window.ethereum) {
       const web3 = new Web3(window.ethereum);
       try {
         await window.ethereum.request({ method: "eth_requestAccounts" });
         const accounts = await web3.eth.getAccounts();
-        setWalletAddress(accounts[0]); // Store connected wallet address
-        console.log("Connected Wallet Address:", accounts[0]);
+        const userAddress = accounts[0];
+        setWalletAddress(userAddress);
+        console.log("Connected Wallet Address:", userAddress);
+
+        // Request a signature from the user
+        const message = "Login to My App " + new Date().toISOString();
+        const signature = await web3.eth.personal.sign(message, userAddress, "");
+
+        // Send address & signature to backend for verification
+        const response = await axios.post("http://localhost:5000/login", {
+          address: userAddress,
+          signature: signature,
+          message: message,
+        });
+
+        console.log("Backend Response:", response.data);
       } catch (error) {
-        console.error("User denied MetaMask connection.");
+        console.error("MetaMask connection failed:", error);
       }
     } else {
       alert("MetaMask is not installed. Please install it to continue.");
     }
   };
-
   return (
     <div className="flex" style={{ margin: "250px 0" }}>
       <div className="bg-white" >

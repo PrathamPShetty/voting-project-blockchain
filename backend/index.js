@@ -1,56 +1,98 @@
-require('dotenv').config();
-const express = require('express');
+require("dotenv").config();
+const express = require("express");
+const cors = require("cors");
+const {Web3} = require("web3");
+const bodyParser = require("body-parser");
+const { recoverPersonalSignature } = require("@metamask/eth-sig-util");
+
 const app = express();
-const fileUpload = require('express-fileupload');
-app.use(
-    fileUpload({
-        extended:true
-    })
-)
-app.use(express.static(__dirname));
 app.use(express.json());
-const path = require("path");
-const ethers = require('ethers');
+app.use(cors());
 
-var port = 3000;
+// ✅ Correct Web3 provider instantiation
+const web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:7545'));
 
-const API_URL = process.env.API_URL;
-const PRIVATE_KEY = process.env.PRIVATE_KEY;
-const CONTRACT_ADDRESS = process.env.CONTRACT_ADDRESS;
+// ✅ Correct ABI import (Ensure this path is correct)
+const votingABI = require("./artifacts/contracts/Voting.sol/Voting.json");
 
-const {abi} = require('./artifacts/contracts/Voting.sol/Voting.json');
-const provider = new ethers.providers.JsonRpcProvider(API_URL);
+// ✅ Ensure the correct contract address is used
+const contractAddress = "0x66f6b4726e999a1EdaA20E97920DCDb8ee5Ae9FC";
 
-const signer = new ethers.Wallet(PRIVATE_KEY, provider);
+// ✅ Load the contract
+const contractABI = votingABI.abi;
+const contract = new web3.eth.Contract(contractABI, contractAddress);
 
-const contractInstance = new ethers.Contract(CONTRACT_ADDRESS, abi, signer);
+// ✅ Login with MetaMask Signature Verification
+app.post("/login", (req, res) => {
+    const { address, signature, message } = req.body;
 
-app.get("/", (req, res) => {
-    res.sendFile(path.join(__dirname, "index.html"));
-})
-
-app.get("/index.html", (req, res) => {
-    res.sendFile(path.join(__dirname, "index.html"));
-})
-
-app.post("/vote", async (req, res) => {
-    var vote = req.body.vote;
-    console.log(vote)
-    async function storeDataInBlockchain(vote) {
-        console.log("Adding the candidate in voting contract...");
-        const tx = await contractInstance.addCandidate(vote);
-        await tx.wait();
+    if (!address || !signature || !message) {
+        return res.status(400).json({ success: false, message: "Missing fields" });
     }
-    const bool = await contractInstance.getVotingStatus();
-    if (bool == true) {
-        await storeDataInBlockchain(vote);
-        res.send("The candidate has been registered in the smart contract");
-    }
-    else {
-        res.send("Voting is finished");
+
+    try {
+        const recoveredAddress = recoverPersonalSignature({
+            data: message,
+            signature: signature,
+        });
+
+        if (recoveredAddress.toLowerCase() === address.toLowerCase()) {
+            console.log("User logged in:", address);
+            return res.json({ success: true, message: "Login successful!" });
+        } else {
+            return res.status(401).json({ success: false, message: "Signature verification failed" });
+        }
+    } catch (error) {
+        return res.status(500).json({ success: false, message: "Internal server error" });
     }
 });
 
-app.listen(port, function () {
-    console.log("App is listening on port 3000")
+// ✅ Get All Candidates
+app.get("/candidates", async (req, res) => {
+    try {
+        const candidates = await contract.methods.getAllVotesOfCandiates().call();
+        res.json(candidates);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+
+app.post("/vote", async (req, res) => {
+    try {
+        const { candidateIndex } = req.body;
+        const tx = await contract.methods.vote(candidateIndex).send({
+            from: account.address,
+            gas: 2000000
+        });
+        res.json({ message: "Vote successful!", transaction: tx.transactionHash });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+
+app.get("/status", async (req, res) => {
+    try {
+        const status = await contract.methods.getVotingStatus().call();
+        res.json({ votingOpen: status });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+
+app.get("/remaining-time", async (req, res) => {
+    try {
+        const timeLeft = await contract.methods.getRemainingTime().call();
+        res.json({ remainingTime: timeLeft });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
 });

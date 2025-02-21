@@ -62,3 +62,19 @@ constructor(string[] memory _candidateNames, uint256 _durationInMinutes) {
         return votingEnd - block.timestamp;
 }
 }
+
+
+// constructor(string[] memory _candidateNames, uint256 _durationInMinutes) {
+//     require(_durationInMinutes > 0, "Duration must be greater than zero.");
+//     owner = msg.sender;
+//     votingStart = block.timestamp;
+//     votingEnd = block.timestamp + (_durationInMinutes * 1 minutes);
+
+//     // Allow empty candidate list
+//     for (uint256 i = 0; i < _candidateNames.length; i++) {
+//         candidates.push(Candidate({
+//             name: _candidateNames[i],
+//             voteCount: 0
+//         }));
+//     }
+// }
