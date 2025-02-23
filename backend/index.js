@@ -26,7 +26,7 @@ const web3 = new Web3(new Web3.providers.HttpProvider("http://127.0.0.1:7546"));
 const votingABI = require("./artifacts/contracts/Voting.sol/Voting.json");
 
 // ✅ Ensure the correct contract address is used
-const contractAddress = "0x7861b46027C09b0f43a3c90d65bda68E0E85a6a5";
+const contractAddress = "0xc063758D97ADFf6e7d11414e18A3A6D2B76a4C17";
 const contractABI = votingABI.abi;
 const contract = new web3.eth.Contract(contractABI, contractAddress);
 
@@ -128,6 +128,48 @@ app.post("/create-batch", async (req, res) => {
 });
 
 
+app.post("/start-voting", async (req, res) => {
+    try {
+        const { batchId, senderAddress } = req.body;
+
+        if (!batchId || !senderAddress) {
+            return res.status(400).json({ success: false, error: "Missing batchId or senderAddress" });
+        }
+
+        const tx = await contract.methods.startVoting(batchId).send({
+            from: senderAddress,
+            gas: 2000000,
+        });
+
+        res.json({ success: true, message: "Voting started successfully!", transaction: tx.transactionHash });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+
+
+app.post("/stop-voting", async (req, res) => {
+    try {
+        const { batchId, senderAddress } = req.body;
+
+        if (!batchId || !senderAddress) {
+            return res.status(400).json({ success: false, error: "Missing batchId or senderAddress" });
+        }
+
+        const tx = await contract.methods.stopVoting(batchId).send({
+            from: senderAddress,
+            gas: 2000000,
+        });
+
+        res.json({ success: true, message: "Voting stopped successfully!", transaction: tx.transactionHash });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+
+
 async function getAllBatches() {
     try {
         const totalBatches = await contract.methods.getTotalBatches().call();
@@ -150,7 +192,7 @@ async function getAllBatches() {
             });
         }
 
-        console.log(batchList);
+        // console.log(batchList);
 
          
         if (!batchList || batchList.length === 0) {
@@ -168,17 +210,45 @@ async function getAllBatches() {
 app.get("/getbatches", async (req, res) => {
     try {
         let batches = await getAllBatches();
-        console.log(batches);
+        // console.log(batches);
         batches =safeJSON(batches);
-        console.log(batches);
+        // console.log(batches);
         res.json({ success: true, batches });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
     }
 });
-// ✅ Get All Voting Batches
 
-// ✅ Root Route - Fetch Contract Owner
+app.post("/add-candidates", async (req, res) => {
+    try {
+        const { batchId, candidateName, ownerAddress } = req.body;
+
+        if (!batchId || !candidateName || !ownerAddress) {
+            return res.status(400).json({ success: false, error: "Missing batchId, candidateName, or ownerAddress" });
+        }
+
+        console.log("Adding candidate:", { batchId, candidateName, ownerAddress });
+
+        // Step 1: Check if voting has started for the batch
+        const isVotingActive = await contract.methods.getVotingStatus(batchId).call();
+        if (isVotingActive) {
+            return res.status(400).json({ success: false, error: "Cannot add candidate after voting has started." });
+        }
+
+        // Step 2: Prepare and send transaction
+        const tx = await contract.methods.addCandidate(batchId, candidateName).send({
+            from: ownerAddress,
+            gas: 2000000,
+        });
+
+        res.json({ success: true, message: "Candidate added successfully!", txHash: tx.transactionHash });
+    } catch (error) {
+        console.error("Error adding candidate:", error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+
 app.get("/", async (req, res) => {
     try {
         const owner = await contract.methods.getOwner().call();

@@ -64,11 +64,14 @@ const AdminPanel = () => {
   const addCandidate = async () => {
     if (!newCandidateName.trim() || !selectedBatch) return;
 
+         
+        console.log(selectedBatch);
+
     try {
-      const response = await axios.post("http://localhost:5000/candidates", {
+      const response = await axios.post("http://localhost:5000/add-candidates", {
         candidateName: newCandidateName,
-        batchName: selectedBatch,
-        senderAddress,
+        batchId: selectedBatch,
+        ownerAddress: senderAddress,
       });
 
       if (response.data.success) {
