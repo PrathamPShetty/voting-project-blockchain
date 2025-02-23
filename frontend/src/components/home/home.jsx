@@ -4,7 +4,7 @@ import "./home.css";
 import "../../App.css";
 
 const OnlineVoting = () => {
-  const navigate = useNavigate(); // Hook for navigation
+  const navigate = useNavigate(); 
 
   return (
     <div>
@@ -14,7 +14,7 @@ const OnlineVoting = () => {
           <h1 className="logo">Online Voting</h1>
         </div>
         <div className="nav-right">
-          <button onClick={() => navigate("/admin")}>Admin</button>
+          <button onClick={() => navigate("/adminlogin")}>Admin</button>
           <button onClick={() => navigate("/login")}>Login</button>
           <button onClick={() => navigate("/guidelines")}>Guidelines</button>
 

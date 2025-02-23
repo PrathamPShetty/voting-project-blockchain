@@ -2,6 +2,7 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const { Web3 } = require("web3");
+const { v4: uuidv4 } = require("uuid");
 const bodyParser = require("body-parser");
 const { recoverPersonalSignature } = require("@metamask/eth-sig-util");
 
@@ -25,7 +26,7 @@ const web3 = new Web3(new Web3.providers.HttpProvider("http://127.0.0.1:7546"));
 const votingABI = require("./artifacts/contracts/Voting.sol/Voting.json");
 
 // ✅ Ensure the correct contract address is used
-const contractAddress = "0xb9E91e383EC7529583017dbc1ef4cF65a7a3EbC1";
+const contractAddress = "0x7861b46027C09b0f43a3c90d65bda68E0E85a6a5";
 const contractABI = votingABI.abi;
 const contract = new web3.eth.Contract(contractABI, contractAddress);
 
@@ -68,7 +69,7 @@ app.get("/candidates", async (req, res) => {
 // ✅ Voting Route (User Votes for a Candidate)
 app.post("/vote", async (req, res) => {
     try {
-        console.log("voting is started");
+        console.log("Voting is started");
         const { address, candidateIndex } = req.body;
         const tx = await contract.methods.vote(candidateIndex).send({
             from: address,
@@ -95,6 +96,94 @@ app.get("/remaining-time", async (req, res) => {
     try {
         const timeLeft = await contract.methods.getRemainingTime().call();
         res.json({ remainingTime: timeLeft.toString() }); // ✅ Convert BigInt to string
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// ✅ Create a Voting Batch
+app.post("/create-batch", async (req, res) => {
+    try {
+        const { batchName, senderAddress } = req.body;
+        const candidateNames = ['nota'];
+        const durationInMinutes = 60;
+
+        if (!batchName || !candidateNames || !durationInMinutes || !senderAddress) {
+            return res.status(400).json({ error: "Missing required fields" });
+        }
+
+        console.log("Creating batch with:", { batchName, candidateNames, durationInMinutes, senderAddress });
+
+        // ✅ Pass parameters separately
+        const tx = await contract.methods.createBatch(batchName, candidateNames, durationInMinutes).send({
+            from: senderAddress,
+            gas: 2000000,
+        });
+
+        res.json({ success: true, message: "Batch created successfully!", transaction: tx.transactionHash });
+    } catch (error) {
+        console.error("Batch creation error:", error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+
+async function getAllBatches() {
+    try {
+        const totalBatches = await contract.methods.getTotalBatches().call();
+        let batchList = [];
+
+       
+
+        for (let batchId = 1; batchId <= totalBatches; batchId++) {
+            const batchData = await contract.methods.getBatch(batchId).call();
+            
+            let candidates = batchData[1].map(candidate => ({
+                name: candidate.name,
+                voteCount: candidate.voteCount
+            }));
+
+            batchList.push({
+                batchId,
+                name: batchData[0], // Assuming batch name is at index 0
+                candidates
+            });
+        }
+
+        console.log(batchList);
+
+         
+        if (!batchList || batchList.length === 0) {
+            return []; // Return an empty array if no batches exist
+        }
+
+        return batchList;
+    } catch (error) {
+        console.error("Error fetching batches:", error);
+        return [];
+    }
+}
+
+// REST API route to get all batches
+app.get("/getbatches", async (req, res) => {
+    try {
+        let batches = await getAllBatches();
+        console.log(batches);
+        batches =safeJSON(batches);
+        console.log(batches);
+        res.json({ success: true, batches });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+// ✅ Get All Voting Batches
+
+// ✅ Root Route - Fetch Contract Owner
+app.get("/", async (req, res) => {
+    try {
+        const owner = await contract.methods.getOwner().call();
+        console.log("Contract Owner Address:", owner);
+        res.json({ owner });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

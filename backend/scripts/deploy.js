@@ -1,19 +1,19 @@
 const hre = require("hardhat");
 
 async function main() {
-    console.log("Deploying Voting contract...");
+    console.log("🚀 Deploying Voting contract...");
 
-    const candidates = ["Alice", "Bob", "Charlie"];
-    const duration = 10; // Voting duration in minutes
-
+    // Deploy contract
     const Voting = await hre.ethers.getContractFactory("Voting");
-    const voting = await Voting.deploy(candidates, duration);
-
+    const voting = await Voting.deploy();
     await voting.deployed();
-    console.log(`Voting contract deployed at: ${voting.address}`);
+    
+    console.log(`✅ Voting contract deployed at: ${voting.address}`);
+
+    // ❌ Do not create a batch (Keep it null)
 }
 
 main().catch((error) => {
-    console.error(error);
+    console.error("❌ Script failed:", error);
     process.exit(1);
 });

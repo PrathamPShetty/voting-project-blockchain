@@ -63,7 +63,7 @@ const VoterLogin = () => {
         });
 console.log("res",response.data.success);
              if (response.data.success) {
-                navigate("/voting", { state: { account: response.data.account } }); // Pass account
+                navigate("/admin", { state: { account: response.data.account } }); // Pass account
             } else {
                 alert("Voting failed!");
             }

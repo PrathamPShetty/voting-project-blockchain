@@ -7,59 +7,102 @@ contract Voting {
         uint256 voteCount;
     }
 
-    Candidate[] public candidates;
-    address owner;
-    mapping(address => bool) public voters;
-
-    uint256 public votingStart;
-    uint256 public votingEnd;
-
-constructor(string[] memory _candidateNames, uint256 _durationInMinutes) {
-    for (uint256 i = 0; i < _candidateNames.length; i++) {
-        candidates.push(Candidate({
-            name: _candidateNames[i],
-            voteCount: 0
-        }));
+    struct VotingBatch {
+        string name; // Store batch name
+        Candidate[] candidates;
+        uint256 votingStart;
+        uint256 votingEnd;
+        mapping(address => bool) voters;
+        bool exists;
     }
-    owner = msg.sender;
-    votingStart = block.timestamp;
-    votingEnd = block.timestamp + (_durationInMinutes * 1 minutes);
-}
 
-    modifier onlyOwner {
-        require(msg.sender == owner);
+    address public owner;
+    uint256 public batchCount; // Track number of batches
+    mapping(uint256 => VotingBatch) public batches; // Map batch ID to VotingBatch
+    mapping(string => uint256) public batchIds; // Map batch name to batch ID
+
+    constructor() {
+        owner = msg.sender;
+        batchCount = 0;
+    }
+
+    modifier onlyOwner() {
+        require(msg.sender == owner, "Only owner can perform this action.");
         _;
     }
 
-    function addCandidate(string memory _name) public onlyOwner {
-        candidates.push(Candidate({
-                name: _name,
+    function createBatch(string memory _batchName, string[] memory _candidateNames, uint256 _durationInMinutes) public onlyOwner {
+        require(batchIds[_batchName] == 0, "Batch name already exists."); // Prevent duplicate names
+        batchCount++; // Increment batch count
+
+        VotingBatch storage batch = batches[batchCount];
+        batch.name = _batchName;
+        batch.votingStart = block.timestamp;
+        batch.votingEnd = block.timestamp + (_durationInMinutes * 1 minutes);
+        batch.exists = true;
+
+        batchIds[_batchName] = batchCount; // Store batch name mapping
+
+        for (uint256 i = 0; i < _candidateNames.length; i++) {
+            batch.candidates.push(Candidate({
+                name: _candidateNames[i],
                 voteCount: 0
-        }));
+            }));
+        }
     }
 
-    function vote(uint256 _candidateIndex) public {
-        require(!voters[msg.sender], "You have already voted.");
-        require(_candidateIndex < candidates.length, "Invalid candidate index.");
+    function vote(string memory _batchName, uint256 candidateIndex) public {
+        uint256 batchId = batchIds[_batchName];
+        require(batchId > 0, "Batch does not exist.");
+        VotingBatch storage batch = batches[batchId];
 
-        candidates[_candidateIndex].voteCount++;
-        voters[msg.sender] = true;
+        require(!batch.voters[msg.sender], "You have already voted.");
+        require(candidateIndex < batch.candidates.length, "Invalid candidate index.");
+        require(block.timestamp >= batch.votingStart && block.timestamp < batch.votingEnd, "Voting is not active.");
+
+        batch.candidates[candidateIndex].voteCount++;
+        batch.voters[msg.sender] = true;
     }
 
-    function getAllVotesOfCandiates() public view returns (Candidate[] memory){
-        return candidates;
+    function getCandidates(string memory _batchName) public view returns (Candidate[] memory) {
+        uint256 batchId = batchIds[_batchName];
+        require(batchId > 0, "Batch does not exist.");
+        return batches[batchId].candidates;
     }
 
-    function getVotingStatus() public view returns (bool) {
-    return (block.timestamp >= votingStart && block.timestamp < votingEnd);
-}
+    function getVotingStatus(string memory _batchName) public view returns (bool) {
+        uint256 batchId = batchIds[_batchName];
+        require(batchId > 0, "Batch does not exist.");
+        VotingBatch storage batch = batches[batchId];
+        return (block.timestamp >= batch.votingStart && block.timestamp < batch.votingEnd);
+    }
 
-    function getRemainingTime() public view returns (uint256) {
-        require(block.timestamp >= votingStart, "Voting has not started yet.");
-        if (block.timestamp >= votingEnd) {
+    function getRemainingTime(string memory _batchName) public view returns (uint256) {
+        uint256 batchId = batchIds[_batchName];
+        require(batchId > 0, "Batch does not exist.");
+        VotingBatch storage batch = batches[batchId];
+
+        if (block.timestamp >= batch.votingEnd) {
             return 0;
         }
-        return votingEnd - block.timestamp;
-}
-}
+        return batch.votingEnd - block.timestamp;
+    }
 
+    function getBatchId(string memory _batchName) public view returns (uint256) {
+        return batchIds[_batchName];
+    }
+
+    function getOwner() public view returns (address) {
+        return owner;
+    }
+
+    function getBatch(uint256 _batchId) public view returns (string memory, Candidate[] memory) {
+        require(_batchId > 0 && _batchId <= batchCount, "Batch does not exist");
+        return (batches[_batchId].name, batches[_batchId].candidates);
+    }
+
+    // Function to get total number of batches
+    function getTotalBatches() public view returns (uint256) {
+        return batchCount;
+    }
+}

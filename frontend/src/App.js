@@ -6,6 +6,7 @@ import Guidelines from "./components/guide/guide";
 import AdminPanel from "./components/index";
 import './App.css';
 import VotingApp from "./components/votingPage/votingPage";
+import AdminLogin from "./components/adminLogin/login";
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
           <Route path="/guidelines" element={<Guidelines />} />
           <Route path="/admin" element={<AdminPanel />} />
           <Route path="/voting" element={<VotingApp/>}/>
+          <Route path="/adminlogin" element={<AdminLogin/>}/>
         </Routes>
       </div>
     </Router>
