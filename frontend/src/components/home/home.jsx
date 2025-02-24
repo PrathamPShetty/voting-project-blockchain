@@ -21,7 +21,7 @@ const OnlineVoting = () => {
           {/* User Profile Section */}
           <div className="profile-container">
             <div className="profile-icon">
-              <img src="vishnu2.png" alt="Profile" className="profile-img" />
+              <img src="/image.png" alt="Profile" className="profile-img" />
             </div>
           </div>
         </div>

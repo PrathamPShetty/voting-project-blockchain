@@ -2,6 +2,7 @@
 pragma solidity ^0.8.28;
 
 contract Voting {
+
     struct Candidate {
         string name;
         uint256 voteCount;
@@ -34,8 +35,7 @@ contract Voting {
 
     function createBatch(
         string memory _batchName,
-        string[] memory _candidateNames,
-        uint256 _durationInMinutes
+        string[] memory _candidateNames
     ) public onlyOwner {
         require(batchIds[_batchName] == 0, "Batch name already exists."); // Prevent duplicate names
         batchCount++; // Increment batch count
@@ -85,6 +85,29 @@ contract Voting {
 
         batch.votingEnd = block.timestamp; // Stop voting immediately
     }
+
+function getAllCandidates(string memory _batchName) 
+    public view returns (string memory, bool, bool) 
+{
+    uint256 batchId = batchIds[_batchName];
+    require(batchId > 0, "Batch does not exist.");
+    
+    VotingBatch storage batch = batches[batchId];
+
+    string memory candidateList = "";
+    
+    for (uint256 i = 0; i < batch.candidates.length; i++) {
+        candidateList = string(abi.encodePacked(candidateList, batch.candidates[i].name, ", "));
+    }
+
+    // Check if the caller has already voted in this batch
+    bool hasVoted = batch.voters[msg.sender];
+
+    // Check if the batch has started
+    bool hasStarted = batch.hasStarted;
+
+    return (candidateList, hasVoted, hasStarted);
+}
 
     function vote(string memory _batchName, uint256 candidateIndex) public {
         uint256 batchId = batchIds[_batchName];
@@ -139,4 +162,6 @@ contract Voting {
     function getTotalBatches() public view returns (uint256) {
         return batchCount;
     }
+
+
 }

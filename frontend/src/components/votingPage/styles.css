@@ -86,3 +86,32 @@
     font-size: 18px;
     font-weight: bold;
 }
+
+
+select {
+    width: 100%;
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    background-color: #fff;
+    transition: all 0.3s ease;
+  }
+  
+  select:focus {
+    outline: none;
+    border-color: #2563eb; /* Blue border on focus */
+    box-shadow: 0 0 5px rgba(37, 99, 235, 0.5);
+  }
+  
+  option {
+    font-size: 16px;
+    padding: 5px;
+  }
+  
+  span.text-red-500 {
+    font-size: 14px;
+    margin-top: 5px;
+    display: block;
+  }
+  

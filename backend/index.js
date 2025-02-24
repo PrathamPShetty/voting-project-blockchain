@@ -26,7 +26,7 @@ const web3 = new Web3(new Web3.providers.HttpProvider("http://127.0.0.1:7546"));
 const votingABI = require("./artifacts/contracts/Voting.sol/Voting.json");
 
 // ✅ Ensure the correct contract address is used
-const contractAddress = "0xc063758D97ADFf6e7d11414e18A3A6D2B76a4C17";
+const contractAddress = "0x8d3A9E658633Cc4d3f2bf9A7B4A856bae07C2BE9";
 const contractABI = votingABI.abi;
 const contract = new web3.eth.Contract(contractABI, contractAddress);
 
@@ -55,10 +55,16 @@ app.post("/login", (req, res) => {
     }
 });
 
-// ✅ Get All Candidates (Fix: Correct Function Name)
 app.get("/candidates", async (req, res) => {
     try {
-        const candidates = await contract.methods.getAllVotesOfCandiates().call();
+        const { batch } = req.query; // ✅ Corrected: Use req.query instead of req.params
+
+        console.log("Batch received:", batch);
+        if (!batch) {
+            return res.status(400).json({ error: "Batch name is required" });
+        }
+
+        const candidates = await contract.methods.getCandidates(batch).call();
         console.log("Candidates:", candidates);
         res.json(safeJSON(candidates)); // ✅ Use safeJSON() to prevent BigInt errors
     } catch (error) {
@@ -66,12 +72,14 @@ app.get("/candidates", async (req, res) => {
     }
 });
 
+
+
 // ✅ Voting Route (User Votes for a Candidate)
 app.post("/vote", async (req, res) => {
     try {
         console.log("Voting is started");
-        const { address, candidateIndex } = req.body;
-        const tx = await contract.methods.vote(candidateIndex).send({
+        const { address,batch, candidateIndex} = req.body;
+        const tx = await contract.methods.vote(batch,candidateIndex).send({
             from: address,
             gas: 2000000,
         });
@@ -112,10 +120,10 @@ app.post("/create-batch", async (req, res) => {
             return res.status(400).json({ error: "Missing required fields" });
         }
 
-        console.log("Creating batch with:", { batchName, candidateNames, durationInMinutes, senderAddress });
+        console.log("Creating batch with:", { batchName, candidateNames, senderAddress });
 
         // ✅ Pass parameters separately
-        const tx = await contract.methods.createBatch(batchName, candidateNames, durationInMinutes).send({
+        const tx = await contract.methods.createBatch(batchName, candidateNames).send({
             from: senderAddress,
             gas: 2000000,
         });
@@ -136,7 +144,9 @@ app.post("/start-voting", async (req, res) => {
             return res.status(400).json({ success: false, error: "Missing batchId or senderAddress" });
         }
 
-        const tx = await contract.methods.startVoting(batchId).send({
+        
+ const durationInMinutes =60;
+        const tx = await contract.methods.startVoting(batchId,durationInMinutes).send({
             from: senderAddress,
             gas: 2000000,
         });

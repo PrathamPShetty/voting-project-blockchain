@@ -24,22 +24,20 @@ const AdminPanel = () => {
   // Fetch batches from the backend
   const getBatches = async () => {
     try {
-      const response = await fetch("http://localhost:5000/getbatches");
-      const data = await response.json();
-      setBatches(data?.batches || []); // Ensures state is never undefined
+      const response = await axios.get("http://localhost:5000/getbatches");
+      setBatches(response.data?.batches || []);
     } catch (error) {
       console.error("Error fetching batches:", error);
     }
   };
 
-  // Fetch batches on mount
   useEffect(() => {
     getBatches();
   }, []);
 
   // Add a new batch
   const addBatch = async () => {
-    if (!newBatchName.trim()) return; // Prevent empty input
+    if (!newBatchName.trim()) return;
 
     try {
       const response = await axios.post("http://localhost:5000/create-batch", {
@@ -48,7 +46,7 @@ const AdminPanel = () => {
       });
 
       if (response.data.success) {
-        getBatches(); // Refresh batch list
+        getBatches();
         setNewBatchName("");
         setShowBatchForm(false);
       } else {
@@ -60,12 +58,9 @@ const AdminPanel = () => {
     }
   };
 
-  // Add a candidate to a batch
+  // Add a candidate
   const addCandidate = async () => {
     if (!newCandidateName.trim() || !selectedBatch) return;
-
-         
-        console.log(selectedBatch);
 
     try {
       const response = await axios.post("http://localhost:5000/add-candidates", {
@@ -87,17 +82,56 @@ const AdminPanel = () => {
     }
   };
 
+  // Start voting
+  const startVoting = async (batchId) => {
+    try {
+      const response = await axios.post("http://localhost:5000/start-voting", {
+        batchId,
+        senderAddress,
+      });
+
+      if (response.data.success) {
+        alert("Voting started successfully!");
+        getBatches();
+      } else {
+        alert("Failed to start voting.");
+      }
+    } catch (error) {
+      console.error("Start voting error:", error);
+      alert("Error starting voting.");
+    }
+  };
+
+  // Stop voting
+  const stopVoting = async (batchId) => {
+    try {
+      const response = await axios.post("http://localhost:5000/stop-voting", {
+        batchId,
+       senderAddress,
+      });
+
+      if (response.data.success) {
+        alert("Voting stopped successfully!");
+        getBatches();
+      } else {
+        alert("Failed to stop voting.");
+      }
+    } catch (error) {
+      console.error("Stop voting error:", error);
+      alert("Error stopping voting.");
+    }
+  };
+
   return (
     <div className="admin-panel">
       <h1>Admin Panel</h1>
 
-      {/* Add Batch */}
-      <button onClick={() => setShowBatchForm(!showBatchForm)} className="add-candidate-btn">
+      <button onClick={() => setShowBatchForm(!showBatchForm)} className="btn">
         {showBatchForm ? "Hide Batch Form" : "Add Batch"}
       </button>
 
       {showBatchForm && (
-        <div className="candidate-form">
+        <div className="form">
           <input
             type="text"
             placeholder="Enter batch name"
@@ -110,13 +144,12 @@ const AdminPanel = () => {
         </div>
       )}
 
-      {/* Add Candidate */}
-      <button onClick={() => setShowForm(!showForm)} className="add-candidate-btn">
+      <button onClick={() => setShowForm(!showForm)} className="btn">
         {showForm ? "Hide Form" : "Add Candidate"}
       </button>
 
       {showForm && (
-        <div className="candidate-form">
+        <div className="form">
           <select onChange={(e) => setSelectedBatch(e.target.value)} value={selectedBatch}>
             <option value="">Select Batch</option>
             {batches.map((batch, index) => (
@@ -125,7 +158,6 @@ const AdminPanel = () => {
               </option>
             ))}
           </select>
-
           <input
             type="text"
             placeholder="Enter candidate name"
@@ -138,13 +170,20 @@ const AdminPanel = () => {
         </div>
       )}
 
-      {/* Display Batches & Candidates */}
       <div className="batches-list">
         <h2>Batches & Candidates</h2>
         {batches.length > 0 ? (
           batches.map((batch, batchIndex) => (
             <div key={batchIndex} className="batch">
               <h3>{batch.name}</h3>
+
+              <button onClick={() => startVoting(batch.name)} className="start-btn">
+                Start Voting
+              </button>
+              <button onClick={() => stopVoting(batch.name)} className="stop-btn">
+                Stop Voting
+              </button>
+
               {batch.candidates.length === 0 ? (
                 <p>No candidates yet</p>
               ) : (

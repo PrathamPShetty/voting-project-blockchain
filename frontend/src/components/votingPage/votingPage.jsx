@@ -5,28 +5,41 @@ import "./styles.css";  // Import CSS
 
 const VotingApp = () => {
     const [wallet, setWallet] = useState("");
+    const [batch, setBatch] = useState("");
     const [candidates, setCandidates] = useState([]);
     const [selectedCandidate, setSelectedCandidate] = useState(null);
     const location = useLocation();
     const account = location.state?.account;
+    const batchName = location.state?.batch;
 
     useEffect(() => {
         if (account) {
             setWallet(account);
         }
-    }, [account]);
+        if (batchName) {
+            setBatch(batchName);
+        }
+
+        console.log(batchName);
+    }, [account,batchName]);
+
+
 
     useEffect(() => {
         const fetchCandidates = async () => {
             try {
-                const response = await axios.get("http://localhost:5000/candidates");
+                const response = await axios.get("http://localhost:5000/candidates", {
+                    params: { batch } 
+                });
                 setCandidates(response.data);
             } catch (error) {
                 console.error("Error fetching candidates:", error);
             }
         };
+    
         fetchCandidates();
-    }, []);
+    }, [batch]); // ✅ Add batchName as a dependency to refetch when it changes
+    
 
     const vote = async () => {
         if (selectedCandidate === null) {
@@ -39,11 +52,13 @@ const VotingApp = () => {
         try {
             const response = await axios.post("http://localhost:5000/vote", {
                 address: wallet,
+                batch:batch,
                 candidateIndex: selectedCandidate
             });
 
             alert(response.data.message);
         } catch (error) {
+            alert("Already Voted");
             console.error("Error voting:", error);
         }
     };
@@ -76,7 +91,7 @@ const VotingApp = () => {
                                         checked={selectedCandidate === index} 
                                         onChange={() => setSelectedCandidate(index)} 
                                     />
-                                    {candidate.name} ({candidate.voteCount} votes)
+                                    {candidate.name} 
                                 </label>
                             </li>
                         ))}
