@@ -15,6 +15,39 @@ const VoterLogin = () => {
   const navigate = useNavigate();
   const [batches, setBatches] = useState([]);
 
+
+
+
+
+
+
+    const playAudio = () => {
+      let count = 0; // Track how many times the audio has played
+    
+      const playLoop = () => {
+        if (count < 2) { // Play up to 3 times
+          const audio = new Audio("/login.mp3");
+          audio.currentTime = 0; // Reset audio to start
+          audio.play()
+            .then(() => {
+              count++;
+              setTimeout(playLoop, 60000); // Wait 30 seconds before playing again
+            })
+            .catch((error) => console.log("Audio play failed:", error));
+        }
+      };
+    
+      playLoop(); // Start playing
+    };
+  
+    useEffect(() => {
+      const timeout = setTimeout(() => {
+        playAudio();
+      }, 20000); 
+  
+      return () => clearTimeout(timeout);
+    }, []);
+
   useEffect(() => {
     getBatches();
   }, []);
@@ -161,7 +194,12 @@ const VoterLogin = () => {
           </button>
           {walletAddress && <p className="mt-2 text-green-600">Connected: {walletAddress}</p>}
         </div>
+        <br/>
+        <button className="speak-button" onClick={playAudio}>
+  🔊 Hear Instructions
+</button>
       </div>
+  
     </div>
   );
 };

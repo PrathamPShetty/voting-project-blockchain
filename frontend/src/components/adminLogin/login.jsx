@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState,useEffect } from "react";
 import Web3 from "web3"; // Import Web3 for MetaMask connection
 import "./login.css"; // Import CSS
 import axios from "axios";
@@ -11,6 +11,25 @@ const VoterLogin = () => {
   const [passwordError, setPasswordError] = useState("");
   const [walletAddress, setWalletAddress] = useState(null);
   const navigate = useNavigate();
+
+
+
+
+  
+      const playAudio = () => {
+        const audio = new Audio("/login.mp3");
+      audio.play()
+      
+      };
+    
+      useEffect(() => {
+        const timeout = setTimeout(() => {
+          playAudio();
+        }, 20000); 
+    
+        return () => clearTimeout(timeout);
+      }, []);
+  
   const validateForm = () => {
     let isValid = true;
 
@@ -116,7 +135,13 @@ console.log("res",response.data.success);
           </button>
           {walletAddress && <p className="mt-2 text-green-600">Connected: {walletAddress}</p>}
         </div>
+
+        <br/>
+        <button className="speak-button" onClick={playAudio}>
+  🔊 Hear Instructions
+</button>
       </div>
+
     </div>
   );
 };
