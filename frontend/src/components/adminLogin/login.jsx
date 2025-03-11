@@ -110,7 +110,7 @@ const VoterLogin = () => {
     <div className="flex" style={{ margin: "250px 0" }}>
       <div className="bg-white" >
         <h2 className="text-2xl font-bold text-center mb-4">Admin Login</h2>
-        <form onSubmit={handleSubmit}>
+        {/* <form onSubmit={handleSubmit}>
           <div className="mb-4">
             <label className="block font-semibold">Admin ID Number:</label>
             <input
@@ -139,7 +139,7 @@ const VoterLogin = () => {
               Back
             </button>
           </div>
-        </form>
+        </form> */}
         <div className="mt-4 text-center">
           <button className="bg-orange-500 px-4 py-2 rounded" onClick={connectMetaMask}>
             Connect to MetaMask
