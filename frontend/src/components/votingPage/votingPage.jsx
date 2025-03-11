@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { useLocation } from "react-router-dom";
+import { useLocation,useNavigate } from "react-router-dom";
 import "./styles.css"; // Import CSS
 
 const VotingApp = () => {
@@ -10,6 +10,7 @@ const VotingApp = () => {
     const [shuffledCandidates, setShuffledCandidates] = useState([]);
     const [selectedCandidate, setSelectedCandidate] = useState(null);
     const location = useLocation();
+    const navigate = useNavigate();
     const account = location.state?.account;
     const batchName = location.state?.batch;
 
@@ -70,8 +71,10 @@ const VotingApp = () => {
             });
 
             alert(response.data.message);
+            navigate("/");
         } catch (error) {
             alert("Already Voted");
+            navigate("/");
             console.error("Error voting:", error);
         }
     };

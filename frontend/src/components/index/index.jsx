@@ -69,23 +69,31 @@ const AdminPanel = () => {
     getBatches();
   }, [account]);
   
-  const addBatchandres = async() =>{
-    await addBatch;
-    await setBatchResultDate;
-  }
+  const addBatchandres = async () => {
+    const batchId = await addBatch();
+    console.log(batchId);
+    if (batchId) {
+      await setBatchResultDate(batchId);
+    }
+  };
+  
+
   const addBatch = async () => {
     if (!newBatchName.trim()) return;
-
+  
     try {
       const response = await axios.post("http://localhost:5000/create-batch", {
         batchName: newBatchName,
         senderAddress,
       });
-
+  
       if (response.data.success) {
         getBatches();
         setNewBatchName("");
         setShowBatchForm(false);
+        
+        // Return batchId for setting the result date
+        return response.data.batchId; 
       } else {
         alert("Batch creation failed!");
       }
@@ -94,6 +102,7 @@ const AdminPanel = () => {
       alert("Failed to create batch. Try again.");
     }
   };
+  
 
 
   // Set result date for a batch
@@ -102,14 +111,14 @@ const AdminPanel = () => {
       alert("Please select a valid date.");
       return;
     }
-
+  
     try {
       const response = await axios.post("http://localhost:5000/set-result-date", {
-        batchId:newBatchName ,
+        batchId, 
         resultDate,
         senderAddress,
       });
-
+  
       if (response.data.success) {
         alert("Result date set successfully!");
         getBatches();
@@ -121,10 +130,13 @@ const AdminPanel = () => {
       alert("Error setting result date.");
     }
   };
+  
 
   // Add a candidate
   const addCandidate = async () => {
     if (!newCandidateName.trim() || !selectedBatch) return;
+
+    console.log(newCandidateName);
 
     try {
       const response = await axios.post("http://localhost:5000/add-candidates", {
