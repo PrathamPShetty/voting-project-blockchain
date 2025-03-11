@@ -11,6 +11,13 @@ const AdminPanel = () => {
   const [newCandidateName, setNewCandidateName] = useState("");
   const [selectedBatch, setSelectedBatch] = useState("");
   const [senderAddress, setSenderAddress] = useState("");
+  const [resultDate, setResultDate] = useState("");
+
+  
+  const [showDialog, setShowDialog] = useState(false); // For pop-up
+  const [batchResults, setBatchResults] = useState([]); // Store results
+  const [selectedBatchName, setSelectedBatchName] = useState(""); // Selected batch for results
+
 
   const location = useLocation();
   const account = location.state?.account;
@@ -19,23 +26,53 @@ const AdminPanel = () => {
     if (account) {
       setSenderAddress(account);
     }
+    getBatches();
   }, [account]);
 
   // Fetch batches from the backend
   const getBatches = async () => {
     try {
-      const response = await axios.get("http://localhost:5000/getbatches");
-      setBatches(response.data?.batches || []);
+      const response = await axios.get("http://localhost:5000/getallbatches");
+      const batchesArray = Object.values(response.data?.batches || []);
+    
+      console.log("Converted Batches:", batchesArray);
+  
+      setBatches(batchesArray);
     } catch (error) {
       console.error("Error fetching batches:", error);
     }
   };
 
-  useEffect(() => {
-    getBatches();
-  }, []);
+ 
+  const viewResult = async (batchId) => {
+    try {
+      const response = await axios.get("http://localhost:5000/getresult", {
+        params: { batchName: batchId },
+      });
 
-  // Add a new batch
+      console.log(response);
+
+      const batchesArray = Object.values(response.data?.candidates || []);
+
+      setBatchResults(batchesArray);
+      setSelectedBatchName(batchId);
+      setShowDialog(true); // Open dialog
+    } catch (error) {
+      console.error("Error fetching results:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (account) {
+      setSenderAddress(account);
+    }
+    getBatches();
+  }, [account]);
+  
+  const addBatchandres = async() =>{
+    await addBatch;
+    await setBatchResultDate;
+  }
   const addBatch = async () => {
     if (!newBatchName.trim()) return;
 
@@ -55,6 +92,33 @@ const AdminPanel = () => {
     } catch (error) {
       console.error("Batch creation error:", error);
       alert("Failed to create batch. Try again.");
+    }
+  };
+
+
+  // Set result date for a batch
+  const setBatchResultDate = async (batchId) => {
+    if (!resultDate.trim()) {
+      alert("Please select a valid date.");
+      return;
+    }
+
+    try {
+      const response = await axios.post("http://localhost:5000/set-result-date", {
+        batchId:newBatchName ,
+        resultDate,
+        senderAddress,
+      });
+
+      if (response.data.success) {
+        alert("Result date set successfully!");
+        getBatches();
+      } else {
+        alert("Failed to set result date.");
+      }
+    } catch (error) {
+      console.error("Error setting result date:", error);
+      alert("Error setting result date.");
     }
   };
 
@@ -85,6 +149,8 @@ const AdminPanel = () => {
   // Start voting
   const startVoting = async (batchId) => {
     try {
+      console.log(batchId);
+      console.log(senderAddress);
       const response = await axios.post("http://localhost:5000/start-voting", {
         batchId,
         senderAddress,
@@ -107,7 +173,7 @@ const AdminPanel = () => {
     try {
       const response = await axios.post("http://localhost:5000/stop-voting", {
         batchId,
-       senderAddress,
+        senderAddress,
       });
 
       if (response.data.success) {
@@ -126,6 +192,7 @@ const AdminPanel = () => {
     <div className="admin-panel">
       <h1>Admin Panel</h1>
 
+      {/* Add Batch Section */}
       <button onClick={() => setShowBatchForm(!showBatchForm)} className="btn">
         {showBatchForm ? "Hide Batch Form" : "Add Batch"}
       </button>
@@ -137,13 +204,22 @@ const AdminPanel = () => {
             placeholder="Enter batch name"
             value={newBatchName}
             onChange={(e) => setNewBatchName(e.target.value)}
+            required
           />
-          <button onClick={addBatch} disabled={!newBatchName.trim()}>
+          <input
+            type="date"
+            placeholder="Enter Result Date"
+            value={resultDate}
+            onChange={(e) => setResultDate(e.target.value)}
+            required
+          />
+          <button onClick={addBatchandres} disabled={!newBatchName.trim()}>
             Add Batch
           </button>
         </div>
       )}
 
+      {/* Add Candidate Section */}
       <button onClick={() => setShowForm(!showForm)} className="btn">
         {showForm ? "Hide Form" : "Add Candidate"}
       </button>
@@ -170,6 +246,7 @@ const AdminPanel = () => {
         </div>
       )}
 
+      {/* Batches List */}
       <div className="batches-list">
         <h2>Batches & Candidates</h2>
         {batches.length > 0 ? (
@@ -183,14 +260,17 @@ const AdminPanel = () => {
               <button onClick={() => stopVoting(batch.name)} className="stop-btn">
                 Stop Voting
               </button>
+              <button onClick={() => viewResult(batch.name)} className="start-btn">
+                View Result 
+              </button>
 
               {batch.candidates.length === 0 ? (
                 <p>No candidates yet</p>
               ) : (
                 batch.candidates.map((candidate, index) => (
+                  
                   <div key={index} className="candidate-item">
                     <span>{candidate.name}</span>
-                    <span>Votes: {candidate.voteCount}</span>
                   </div>
                 ))
               )}
@@ -200,6 +280,21 @@ const AdminPanel = () => {
           <p>No batches available.</p>
         )}
       </div>
+      {showDialog && (
+        <div className="dialog-overlay">
+          <div className="dialog-box">
+            <h2>Results for {selectedBatchName}</h2>
+            {batchResults.length > 0 ? (
+              batchResults.map((result, idx) => (
+                <p key={idx}>{result.name}: {result.voteCount} votes</p>
+              ))
+            ) : (
+              <p>No results available.</p>
+            )}
+            <button className="start-btn" onClick={() => setShowDialog(false)}>Close</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

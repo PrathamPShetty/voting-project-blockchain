@@ -54,7 +54,7 @@ const VoterLogin = () => {
 
   const getBatches = async () => {
     try {
-      const response = await axios.get("http://localhost:5000/getbatches");
+      const response = await axios.get("http://localhost:5000/getallbatches");
       setBatches(response.data?.batches || []);
     } catch (error) {
       console.error("Error fetching batches:", error);

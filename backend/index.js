@@ -26,13 +26,14 @@ const web3 = new Web3(new Web3.providers.HttpProvider("http://127.0.0.1:7546"));
 const votingABI = require("./artifacts/contracts/Voting.sol/Voting.json");
 
 // ✅ Ensure the correct contract address is used
-const contractAddress = "0x8d3A9E658633Cc4d3f2bf9A7B4A856bae07C2BE9";
+const contractAddress = "0x116984592D3FE2c10cCF10102Bd8eC07ED34075c";
 const contractABI = votingABI.abi;
 const contract = new web3.eth.Contract(contractABI, contractAddress);
 
 // ✅ User Login Route (Signature Verification)
 app.post("/login", (req, res) => {
     const { address, signature, message } = req.body;
+    console.log(address, signature, message);
 
     if (!address || !signature || !message) {
         return res.status(400).json({ success: false, message: "Missing fields" });
@@ -113,7 +114,7 @@ app.get("/remaining-time", async (req, res) => {
 app.post("/create-batch", async (req, res) => {
     try {
         const { batchName, senderAddress } = req.body;
-        const candidateNames = ['nota'];
+        const candidateNames = ['none'];
         const durationInMinutes = 60;
 
         if (!batchName || !candidateNames || !durationInMinutes || !senderAddress) {
@@ -146,6 +147,7 @@ app.post("/start-voting", async (req, res) => {
 
         
  const durationInMinutes =60;
+ const resultAfterMinutes =60;
         const tx = await contract.methods.startVoting(batchId,durationInMinutes).send({
             from: senderAddress,
             gas: 2000000,
@@ -192,7 +194,7 @@ async function getAllBatches() {
             
             let candidates = batchData[1].map(candidate => ({
                 name: candidate.name,
-                voteCount: candidate.voteCount
+                // voteCount: candidate.voteCount
             }));
 
             batchList.push({
@@ -219,15 +221,61 @@ async function getAllBatches() {
 // REST API route to get all batches
 app.get("/getbatches", async (req, res) => {
     try {
-        let batches = await getAllBatches();
+        let batchData = await contract.methods.getVotingResults(batchId).call();
         // console.log(batches);
-        batches =safeJSON(batches);
+        batches =safeJSON(batchData);
         // console.log(batches);
         res.json({ success: true, batches });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
     }
 });
+
+
+app.get("/getallbatches", async (req, res) => {
+    try {
+        let batchData = await contract.methods.getAllBatches().call();
+        // console.log(batches);
+        batches =safeJSON(batchData);
+        // console.log(batches);
+        res.json({ success: true, batches });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+
+app.get("/getresult", async (req, res) => {
+    try {
+        const { batchName } = req.query; 
+        console.log(batchName);// Expect batch name from query params
+        if (!batchName) {
+            return res.status(400).json({ success: false, error: "Batch name is required." });
+        }
+
+        let batchId = await contract.methods.getBatchId(batchName).call();
+        if (batchId == 0) {
+            return res.status(404).json({ success: false, error: "Batch not found." });
+        }
+
+        let batchData = await contract.methods.getVotingResults(batchName).call();
+
+        console.log("batch data",batchData);
+      
+
+        let candidates = batchData.map(candidate => ({
+            name: candidate.name,
+            voteCount: candidate.voteCount
+        }));
+
+        candidates =safeJSON(candidates);
+  console.log(candidates);
+        res.json({ success: true, candidates });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 
 app.post("/add-candidates", async (req, res) => {
     try {
@@ -268,6 +316,78 @@ app.get("/", async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
+
+
+app.get("/batch-candidates/:batchId", async (req, res) => {
+    try {
+        const { batchId } = req.params;
+
+        if (!batchId) {
+            return res.status(400).json({ error: "Batch ID is required" });
+        }
+
+        const candidates = await contract.methods.getCandidates(batchId).call();
+        res.json({ success: true, candidates: safeJSON(candidates) });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+
+app.get("/started-batches", async (req, res) => {
+    try {
+        const totalBatches = await contract.methods.getTotalBatches().call();
+        let startedBatches = [];
+        
+
+        for (let batchId = 0; batchId <= totalBatches; batchId++) {
+            const batchData = await contract.methods.getBatch(batchId).call();
+            const isVotingActive = await contract.methods.getVotingStatus(batchId).call();
+
+            if (isVotingActive) {
+                startedBatches.push({
+                    batchId,
+                    name: batchData[0], // Assuming batch name is at index 0
+                });
+            }
+        }
+        console.log(startedBatches);
+        res.json({ success: true, startedBatches });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+
+app.post("/set-result-date", async (req, res) => { 
+    try {
+        const { batchId, resultDate, senderAddress } = req.body;
+
+        console.log(batchId, resultDate, senderAddress);
+
+        if (!batchId || !resultDate || !senderAddress) {
+            return res.status(400).json({ success: false, error: "Missing batchId, resultDate, or senderAddress" });
+        }
+
+        // Convert date from milliseconds to minutes (Unix timestamp is in seconds, so divide by 60)
+        const resultDateInMinutes = Math.floor(new Date(resultDate).getTime() / 1000 / 60);
+
+        console.log(resultDateInMinutes);
+
+        console.log("Setting result date:", { batchId, resultDateInMinutes, senderAddress });
+
+        const tx = await contract.methods.setResultDate(batchId, resultDateInMinutes).send({
+            from: senderAddress,
+            gas: 2000000,
+        });
+
+        res.json({ success: true, message: "Result date set successfully!", txHash: tx.transactionHash });
+    } catch (error) {
+        console.error("Error setting result date:", error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 
 // ✅ Start Express Server
 const PORT = process.env.PORT || 5000;
