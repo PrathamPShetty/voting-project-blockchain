@@ -1,0 +1,1 @@
+export const admin="0x424e1f22b6955261d1373B2472669FAEBB52a08d"

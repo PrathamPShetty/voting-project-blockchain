@@ -3,6 +3,7 @@ import Web3 from "web3"; // Import Web3 for MetaMask connection
 import "./login.css"; // Import CSS
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import {admin} from "../../constant";
 
 const VoterLogin = () => {
   const [voterId, setVoterId] = useState("");
@@ -11,6 +12,7 @@ const VoterLogin = () => {
   const [passwordError, setPasswordError] = useState("");
   const [walletAddress, setWalletAddress] = useState(null);
   const navigate = useNavigate();
+
 
 
 
@@ -59,34 +61,42 @@ const VoterLogin = () => {
       // Proceed with form submission logic (API call, etc.)
     }
   };
-
   const connectMetaMask = async () => {
     if (window.ethereum) {
       const web3 = new Web3(window.ethereum);
       try {
         await window.ethereum.request({ method: "eth_requestAccounts" });
         const accounts = await web3.eth.getAccounts();
-        const userAddress = accounts[0];
+        const userAddress = accounts[0]; // Get first account
+      
         setWalletAddress(userAddress);
         console.log("Connected Wallet Address:", userAddress);
-
+        console.log("admin:", admin);
+    
+        // Fix: Use `userAddress` instead of `walletAddress`
+        if (userAddress.toLowerCase() !== admin.toLowerCase()) {
+          alert("You are not Admin");
+          return; // Stop execution if not admin
+        }
+  
         // Request a signature from the user
         const message = "Login to My App " + new Date().toISOString();
         const signature = await web3.eth.personal.sign(message, userAddress, "");
-
+  
         // Send address & signature to backend for verification
         const response = await axios.post("http://localhost:5000/login", {
           address: userAddress,
           signature: signature,
           message: message,
         });
-console.log("res",response.data.success);
-             if (response.data.success) {
-                navigate("/admin", { state: { account: response.data.account } }); // Pass account
-            } else {
-                alert("Voting failed!");
-            }
-
+  
+        console.log("res:", response.data.success);
+        if (response.data.success) {
+          navigate("/admin", { state: { account: response.data.account } });
+        } else {
+          alert("Login failed!");
+        }
+  
         console.log("Backend Response:", response.data);
       } catch (error) {
         console.error("MetaMask connection failed:", error);
@@ -95,13 +105,14 @@ console.log("res",response.data.success);
       alert("MetaMask is not installed. Please install it to continue.");
     }
   };
+  
   return (
     <div className="flex" style={{ margin: "250px 0" }}>
       <div className="bg-white" >
-        <h2 className="text-2xl font-bold text-center mb-4">Voter Login</h2>
+        <h2 className="text-2xl font-bold text-center mb-4">Admin Login</h2>
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
-            <label className="block font-semibold">Voter ID Number:</label>
+            <label className="block font-semibold">Admin ID Number:</label>
             <input
               type="text"
               placeholder="Enter your Voter ID"
