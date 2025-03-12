@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { useLocation } from "react-router-dom";
+import { useLocation,useNavigate} from "react-router-dom";
 import "./index.css";
+import Alert from '@mui/material/Alert';
+import Snackbar from '@mui/material/Snackbar';
 
 const AdminPanel = () => {
   const [showForm, setShowForm] = useState(false);
@@ -13,13 +15,18 @@ const AdminPanel = () => {
   const [senderAddress, setSenderAddress] = useState("");
   const [resultDate, setResultDate] = useState("");
 
+  const [alertMessage, setAlertMessage] = useState("");
+  const [alertType, setAlertType] = useState("success");
+  const [openAlert, setOpenAlert] = useState(false);
+
   
   const [showDialog, setShowDialog] = useState(false); // For pop-up
   const [batchResults, setBatchResults] = useState([]); // Store results
   const [selectedBatchName, setSelectedBatchName] = useState(""); // Selected batch for results
-
+  const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
 
   const location = useLocation();
+  const navigate = useNavigate();
   const account = location.state?.account;
 
   useEffect(() => {
@@ -95,20 +102,24 @@ const AdminPanel = () => {
         // Return batchId for setting the result date
         return response.data.batchId; 
       } else {
-        alert("Batch creation failed!");
+        showAlert("Batch creation failed!","error");
       }
     } catch (error) {
       console.error("Batch creation error:", error);
-      alert("Failed to create batch. Try again.");
+      showAlert("Failed to create batch. Try again.","error");
     }
   };
   
-
+  const showAlert = (message, type) => {
+    setAlertMessage(message);
+    setAlertType(type);
+    setOpenAlert(true);
+  };
 
   // Set result date for a batch
   const setBatchResultDate = async (batchId) => {
     if (!resultDate.trim()) {
-      alert("Please select a valid date.");
+      showAlert("Please select a valid date.","error");
       return;
     }
   
@@ -120,14 +131,14 @@ const AdminPanel = () => {
       });
   
       if (response.data.success) {
-        alert("Result date set successfully!");
+        showAlert("Result date set successfully!","success");
         getBatches();
       } else {
-        alert("Failed to set result date.");
+        showAlert("Failed to set result date.","error");
       }
     } catch (error) {
       console.error("Error setting result date:", error);
-      alert("Error setting result date.");
+      showAlert("Error setting result date.","error");
     }
   };
   
@@ -150,11 +161,11 @@ const AdminPanel = () => {
         setNewCandidateName("");
         setShowForm(false);
       } else {
-        alert("Candidate addition failed!");
+        showAlert("Candidate addition failed!", "error");
       }
     } catch (error) {
       console.error("Candidate addition error:", error);
-      alert("Failed to add candidate. Try again.");
+      showAlert("Failed to add candidate. Try again.","error");
     }
   };
 
@@ -169,14 +180,14 @@ const AdminPanel = () => {
       });
 
       if (response.data.success) {
-        alert("Voting started successfully!");
+        showAlert("Voting started successfully!","success");
         getBatches();
       } else {
-        alert("Failed to start voting.");
+        showAlert("Failed to start voting.","error");
       }
     } catch (error) {
       console.error("Start voting error:", error);
-      alert("Error starting voting.");
+      showAlert("Error starting voting.","error");
     }
   };
 
@@ -189,18 +200,32 @@ const AdminPanel = () => {
       });
 
       if (response.data.success) {
-        alert("Voting stopped successfully!");
+        showAlert("Voting stopped successfully!","success");
         getBatches();
       } else {
-        alert("Failed to stop voting.");
+        showAlert("Failed to stop voting.","error");
       }
     } catch (error) {
       console.error("Stop voting error:", error);
-      alert("Error stopping voting.");
+      showAlert("Error stopping voting.","error");
     }
   };
 
-  return (
+  return (<>
+  
+
+      <div  >
+          <Snackbar
+            open={openAlert}
+            autoHideDuration={4000}
+            onClose={() => setOpenAlert(false)}
+            anchorOrigin={{ vertical: "top", horizontal: "center" }}
+          >
+            <Alert onClose={() => setOpenAlert(false)} severity={alertType} variant="filled">
+              {alertMessage}
+            </Alert>
+          </Snackbar>
+          </div>
     <div className="admin-panel">
       <h1>Admin Panel</h1>
 
@@ -307,7 +332,15 @@ const AdminPanel = () => {
           </div>
         </div>
       )}
+
+
+<button className="speak-button" onClick={() => navigate("/")}>
+  Back
+</button>
+
     </div>
+
+      </>
   );
 };
 

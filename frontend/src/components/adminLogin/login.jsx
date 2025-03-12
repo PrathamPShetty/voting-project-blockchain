@@ -4,6 +4,8 @@ import "./login.css"; // Import CSS
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import {admin} from "../../constant";
+import Alert from '@mui/material/Alert';
+import Snackbar from '@mui/material/Snackbar';
 
 const VoterLogin = () => {
   const [voterId, setVoterId] = useState("");
@@ -14,10 +16,19 @@ const VoterLogin = () => {
   const navigate = useNavigate();
 
 
-
-
+  const [alertMessage, setAlertMessage] = useState("");
+  const [alertType, setAlertType] = useState("success");
+  const [openAlert, setOpenAlert] = useState(false);
 
   
+
+
+  const showAlert = (message, type) => {
+    setAlertMessage(message);
+    setAlertType(type);
+    setOpenAlert(true);
+  };
+
       const playAudio = () => {
         const audio = new Audio("/login.mp3");
       audio.play()
@@ -75,7 +86,7 @@ const VoterLogin = () => {
     
         // Fix: Use `userAddress` instead of `walletAddress`
         if (userAddress.toLowerCase() !== admin.toLowerCase()) {
-          alert("You are not Admin");
+          showAlert("You are not Admin","error");
           return; // Stop execution if not admin
         }
   
@@ -94,7 +105,7 @@ const VoterLogin = () => {
         if (response.data.success) {
           navigate("/admin", { state: { account: response.data.account } });
         } else {
-          alert("Login failed!");
+          showAlert("Login failed!","error");
         }
   
         console.log("Backend Response:", response.data);
@@ -102,12 +113,23 @@ const VoterLogin = () => {
         console.error("MetaMask connection failed:", error);
       }
     } else {
-      alert("MetaMask is not installed. Please install it to continue.");
+      showAlert("MetaMask is not installed. Please install it to continue.","error");
     }
   };
   
   return (
     <div className="flex" style={{ margin: "250px 0" }}>
+
+            <Snackbar
+              open={openAlert}
+              autoHideDuration={4000}
+              onClose={() => setOpenAlert(false)}
+              anchorOrigin={{ vertical: "top", horizontal: "center" }}
+            >
+              <Alert onClose={() => setOpenAlert(false)} severity={alertType} variant="filled">
+                {alertMessage}
+              </Alert>
+            </Snackbar>
       <div className="bg-white" >
         <h2 className="text-2xl font-bold text-center mb-4">Admin Login</h2>
         {/* <form onSubmit={handleSubmit}>
@@ -148,8 +170,13 @@ const VoterLogin = () => {
         </div>
 
         <br/>
-        <button className="speak-button" onClick={playAudio}>
-  🔊 Hear Instructions
+        <button className="speak-button" onClick={playAudio} style={{ marginRight: "20px" }}>
+          🔊 Hear Instructions
+        </button>
+
+       
+<button className="speak-button" onClick={() => navigate("/")}>
+  Back
 </button>
       </div>
 

@@ -3,6 +3,9 @@ import axios from "axios";
 import { useLocation,useNavigate } from "react-router-dom";
 import "./styles.css"; // Import CSS
 
+import Alert from '@mui/material/Alert';
+import Snackbar from '@mui/material/Snackbar';
+
 const VotingApp = () => {
     const [wallet, setWallet] = useState("");
     const [batch, setBatch] = useState("");
@@ -11,8 +14,28 @@ const VotingApp = () => {
     const [selectedCandidate, setSelectedCandidate] = useState(null);
     const location = useLocation();
     const navigate = useNavigate();
+
+
+    const [alertMessage, setAlertMessage] = useState("");
+    const [alertType, setAlertType] = useState("success");
+    const [openAlert, setOpenAlert] = useState(false);
+
+
+
     const account = location.state?.account;
     const batchName = location.state?.batch;
+
+
+
+    
+  const showAlert = (message, type) => {
+    setAlertMessage(message);
+    setAlertType(type);
+    setOpenAlert(true);
+  };
+
+
+
 
     useEffect(() => {
         if (account) setWallet(account);
@@ -57,7 +80,7 @@ const VotingApp = () => {
 
     const vote = async () => {
         if (selectedCandidate === null) {
-            alert("Please select a candidate!");
+            showAlert("Please select a candidate!","error");
             return;
         }
 
@@ -70,16 +93,34 @@ const VotingApp = () => {
                 candidateIndex: selectedCandidate
             });
 
-            alert(response.data.message);
-            navigate("/");
+            showAlert(response.data.message,"success");  
+            setTimeout(() => {
+                navigate("/");
+            }, 5000);
         } catch (error) {
-            alert("Already Voted");
-            navigate("/");
+            showAlert("Already Voted","error");
+            setTimeout(() => {
+                navigate("/");
+            }, 3000);
             console.error("Error voting:", error);
         }
     };
 
     return (
+
+          <div >
+          <div >
+              <Snackbar
+                open={openAlert}
+                autoHideDuration={4000}
+                onClose={() => setOpenAlert(false)}
+                anchorOrigin={{ vertical: "top", horizontal: "center" }}
+              >
+                <Alert onClose={() => setOpenAlert(false)} severity={alertType} variant="filled">
+                  {alertMessage}
+                </Alert>
+              </Snackbar>
+        </div>
         <div className="container">
             <div className="header">
                 <h1>Voting DApp</h1>
@@ -119,6 +160,7 @@ const VotingApp = () => {
             <div className="candidate-id">
                 {selectedCandidate !== null && <h3>Selected Candidate ID: {selectedCandidate}</h3>}
             </div>
+        </div>
         </div>
     );
 };
